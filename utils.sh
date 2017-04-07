@@ -82,12 +82,10 @@ function credentials() {
     args+="--build-arg NPMAccessToken=${NPMAccessToken}"
   fi
 
-
   GithubAccessToken=$(printenv | grep GithubAccessToken | sed 's/.*=//')
   if grep "ARG GithubAccessToken" ${filepath} > /dev/null 2>&1; then
     args+=" --build-arg GithubAccessToken=${GithubAccessToken}"
   fi
-
 
   role=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/)
   if [[ -z $role ]]; then
@@ -135,8 +133,7 @@ function ecr_logins() {
 function ecr_cleanup() {
   local region=$1
   local repo=$2
-  cleanup_filepath=./scripts/cleanup.js
-  cleanup_filepath ${region} ${repo}
+  cleanup_ecr ${region} ${repo}
 }
 
 function docker_push() {
@@ -154,6 +151,8 @@ function docker_push() {
     fi
 
     echo "making space in the registry"
+    file=/usr/local/bin/cleanup_ecr
+    [ -h $file ] || ln -s `pwd`/scripts/cleanup.js $file
     ecr_cleanup ${region} ${repo}
 
     echo "pushing ${after} to ${region}"
